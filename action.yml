@@ -4,7 +4,7 @@ author: Mikey Strauss
 outputs:
   OUTPUT_PATH:
     description: evidence output file path
-    value: ""
+    value: ${{ steps.run_valint.outputs.OUTPUT_PATH }}
 inputs:
   target:
     description: Target object name format=[<image:tag>, <dir path>, <git url>]
