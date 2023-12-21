@@ -1,6 +1,10 @@
 name: Scribe evidence verify
 description: Verify compliance policies against evidence to ensure the integrity of supply chain.
 author: Mikey Strauss
+outputs:
+  OUTPUT_PATH:
+    description: evidence output file path
+    value: ""
 inputs:
   target:
     description: Target object name format=[<image:tag>, <dir path>, <git url>]
