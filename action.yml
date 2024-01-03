@@ -1,6 +1,10 @@
 name: Scribe evidence verify
 description: Verify compliance policies against evidence to ensure the integrity of supply chain.
 author: Mikey Strauss
+outputs:
+  OUTPUT_PATH:
+    description: evidence output file path
+    value: ${{ steps.run_valint.outputs.OUTPUT_PATH }}
 inputs:
   target:
     description: Target object name format=[<image:tag>, <dir path>, <git url>]
@@ -121,7 +125,7 @@ runs:
       name: Install valint
       run: |2-
         if [ ! -e "$HOME/.scribe/bin/valint" ]; then
-        	curl -sSfL https://get.scribesecurity.com/install.sh  | sh -s -- -t valint -D
+        	curl -sSfL https://get.scribesecurity.com/install.sh  | sh -s -- -t valint
         fi
     - shell: bash
       name: Run valint command
