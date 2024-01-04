@@ -134,7 +134,7 @@ The command allows users to verify any target against its evidence.
 ```yaml
 - name: valint verify
   id: valint_verify
-  uses: scribe-security/action-verify@v0.4.2
+  uses: scribe-security/action-verify-cli@v0.4.2
   with:
       target: 'busybox:latest'
 ```
@@ -209,7 +209,7 @@ jobs:
   scribe-sign-verify
     runs-on: ubuntu-latest
     steps:
-        uses: scribe-security/action-bom@master
+        uses: scribe-security/action-bom-cli@master
         with:
           target: busybox:latest
           format: attest
@@ -218,7 +218,7 @@ jobs:
           SIGNER_CERT: ${{ secrets.SIGNER_KEY }}
           COMPANY_CA:  ${{ secrets.COMPANY_CA }}
 
-        uses: scribe-security/action-verify@master
+        uses: scribe-security/action-verify-cli@master
         with:
           target: busybox:latest
           input-format: attest
@@ -297,7 +297,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-        uses: scribe-security/action-bom@master
+        uses: scribe-security/action-bom-cli@master
         with:
           target: [target]
           format: [attest, statement, attest-slsa, statement-slsa, attest-generic, statement-generic]
@@ -305,7 +305,7 @@ jobs:
           scribe-client-id: ${{ secrets.clientid }}
           scribe-client-secret: ${{ secrets.clientsecret }}
 
-        uses: scribe-security/action-verify@master
+        uses: scribe-security/action-verify-cli@master
         with:
           target: [target]
           input-format: [attest, statement, attest-slsa, statement-slsa, attest-generic, statement-generic]
@@ -359,7 +359,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name:  Generate evidence step
-        uses: scribe-security/action-bom@master
+        uses: scribe-security/action-bom-cli@master
         with:
           target: [target]
           format: [attest, statement, attest-slsa, statement-slsa, attest-generic, statement-generic]
@@ -367,7 +367,7 @@ jobs:
           oci-repo: [oci_repo]
 
       - name:  Verify policy step
-        uses: scribe-security/action-verify@master
+        uses: scribe-security/action-verify-cli@master
         with:
           target: [target]
           input-format: [attest, statement, attest-slsa, statement-slsa, attest-generic, statement-generic]
@@ -382,7 +382,7 @@ You change users you can use the `USERID` and `USERNAME` env
 
 ```YAML
 - name: Generate cyclonedx json SBOM
-  uses: scribe-security/action-bom@master
+  uses: scribe-security/action-bom-cli@master
   with:
     target: 'busybox:latest'
     format: json
@@ -401,7 +401,7 @@ Valint will look for either an SBOM or SLSA attestation to verify against.
 
 ```yaml
 - name: valint verify
-  uses: scribe-security/action-verify@master
+  uses: scribe-security/action-verify-cli@master
   with:
     target: 'busybox:latest'
 ``` 
@@ -418,7 +418,7 @@ Valint will look for either an SBOM or SLSA attestation to verify against. <br /
 
 ```yaml
 - name: valint verify
-  uses: scribe-security/action-verify@master
+  uses: scribe-security/action-verify-cli@master
   with:
     target: 'busybox:latest'
     input-format: attest-slsa
@@ -436,7 +436,7 @@ Valint will look for either an SBOM or SLSA attestation to verify against. <br /
 
 ```yaml
 - name: valint verify
-  uses: scribe-security/action-verify@master
+  uses: scribe-security/action-verify-cli@master
   with:
     target: 'busybox:latest'
     input-format: attest-generic
@@ -464,7 +464,7 @@ Full job example of a image signing and verifying flow.
 
       - name: valint attest
         id: valint_attest
-        uses: scribe-security/action-bom@master
+        uses: scribe-security/action-bom-cli@master
         with:
            target: 'busybox:latest'
            format: attest
@@ -472,7 +472,7 @@ Full job example of a image signing and verifying flow.
 
       - name: valint verify
         id: valint_verify
-        uses: scribe-security/action-verify@master
+        uses: scribe-security/action-verify-cli@master
         with:
            target: 'busybox:latest'
 
@@ -504,7 +504,7 @@ Full job example of a image signing and verifying flow.
 
       - name: valint attest slsa
         id: valint_attest
-        uses: scribe-security/action-bom@master
+        uses: scribe-security/action-bom-cli@master
         with:
            target: 'busybox:latest'
            format: attest-slsa
@@ -512,7 +512,7 @@ Full job example of a image signing and verifying flow.
 
       - name: valint verify attest slsa
         id: valint_verify
-        uses: scribe-security/action-verify@master
+        uses: scribe-security/action-verify-cli@master
         with:
            target: 'busybox:latest'
            input-format: attest-slsa
@@ -545,7 +545,7 @@ Full job example of a directory signing and verifying flow.
 
       - name: valint attest workdir
         id: valint_attest_dir
-        uses: scribe-security/action-bom@master
+        uses: scribe-security/action-bom-cli@master
         with:
            type: dir
            target: '/GitHub/workspace/'
@@ -554,7 +554,7 @@ Full job example of a directory signing and verifying flow.
 
       - name: valint verify workdir
         id: valint_verify_dir
-        uses: scribe-security/action-verify@master
+        uses: scribe-security/action-verify-cli@master
         with:
            type: dir
            target: '/GitHub/workspace/'
@@ -590,7 +590,7 @@ Full job example of a git repository signing and verifying flow.
 
       - name: valint attest local repo
         id: valint_attest_dir
-        uses: scribe-security/action-bom@master
+        uses: scribe-security/action-bom-cli@master
         with:
            type: git
            target: '/GitHub/workspace/my_repo'
@@ -599,7 +599,7 @@ Full job example of a git repository signing and verifying flow.
 
       - name: valint verify local repo
         id: valint_verify_dir
-        uses: scribe-security/action-verify@master
+        uses: scribe-security/action-verify-cli@master
         with:
            type: git
            target: '/GitHub/workspace/my_repo'
@@ -640,7 +640,7 @@ valint-dir-test:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_TOKEN }}
 
-      - uses: scribe-security/action-bom@master
+      - uses: scribe-security/action-bom-cli@master
         id: valint_attest
         with:
           target: busybox:latest
@@ -659,7 +659,7 @@ Following actions can be used to verify a target over the OCI store.
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_TOKEN }}
 
-      - uses: scribe-security/action-verify@master
+      - uses: scribe-security/action-verify-cli@master
         id: valint_attest
         with:
           target: busybox:latest
