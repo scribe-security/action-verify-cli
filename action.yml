@@ -27,10 +27,16 @@ inputs:
     description: Default policy allowed emails
   force:
     description: Force skip cache
+  initiative:
+    description: Run only rules with specified initiative
   input-format:
-    description: Evidence format, options=[attest-cyclonedx-json attest-slsa statement-slsa statement-cyclonedx-json statement-generic attest-generic]
+    description: Evidence format, options=[attest-cyclonedx-json attest-slsa statement-slsa statement-cyclonedx-json statement-generic attest-generic ]
+  policy:
+    description: Policy configuration file path (early-availability)
   rule:
     description: Rule configuration file path (early-availability)
+  rule-label:
+    description: Run only rules with specified label
   skip-bundle:
     description: Skip bundle download
   skip-report:
@@ -71,6 +77,10 @@ inputs:
     description: Filter out files by regex
   filter-scope:
     description: Filter packages by scope
+  gate:
+    description: Policy Gate name
+  git-auth:
+    description: 'Git repository authentication info, [format: ''username:password'']'
   git-branch:
     description: Git branch in the repository
   git-commit:
@@ -133,7 +143,7 @@ runs:
       name: Install valint
       run: |2-
         if [ ! -e "$HOME/.scribe/bin/valint" ]; then
-        	curl -sSfL https://get.scribesecurity.com/install.sh  | sh -s -- -t valint:v1.2.0
+        	curl -sSfL https://get.scribesecurity.com/install.sh  | sh -s -- -t valint:v1.3.0
         fi
     - shell: bash
       name: Run valint command
@@ -148,8 +158,11 @@ runs:
         ${{ inputs.common-name && '--common-name=' }}${{ inputs.common-name }} \
         ${{ inputs.email && '--email=' }}${{ inputs.email }} \
         ${{ inputs.force && '--force=' }}${{ inputs.force }} \
+        ${{ inputs.initiative && '--initiative=' }}${{ inputs.initiative }} \
         ${{ inputs.input-format && '--input-format=' }}${{ inputs.input-format }} \
+        ${{ inputs.policy && '--policy=' }}${{ inputs.policy }} \
         ${{ inputs.rule && '--rule=' }}${{ inputs.rule }} \
+        ${{ inputs.rule-label && '--rule-label=' }}${{ inputs.rule-label }} \
         ${{ inputs.skip-bundle && '--skip-bundle=' }}${{ inputs.skip-bundle }} \
         ${{ inputs.skip-report && '--skip-report=' }}${{ inputs.skip-report }} \
         ${{ inputs.uri && '--uri=' }}${{ inputs.uri }} \
@@ -171,6 +184,8 @@ runs:
         ${{ inputs.env && '--env=' }}${{ inputs.env }} \
         ${{ inputs.filter-regex && '--filter-regex=' }}${{ inputs.filter-regex }} \
         ${{ inputs.filter-scope && '--filter-scope=' }}${{ inputs.filter-scope }} \
+        ${{ inputs.gate && '--gate=' }}${{ inputs.gate }} \
+        ${{ inputs.git-auth && '--git-auth=' }}${{ inputs.git-auth }} \
         ${{ inputs.git-branch && '--git-branch=' }}${{ inputs.git-branch }} \
         ${{ inputs.git-commit && '--git-commit=' }}${{ inputs.git-commit }} \
         ${{ inputs.git-tag && '--git-tag=' }}${{ inputs.git-tag }} \
