@@ -476,7 +476,7 @@ Full job example of a image signing and verifying flow.
         with:
            target: 'busybox:latest'
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: valint-busybox-test
           path: scribe/valint
@@ -517,7 +517,7 @@ Full job example of a image signing and verifying flow.
            target: 'busybox:latest'
            input-format: attest-slsa
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: valint-busybox-test
           path: scribe/valint
@@ -559,7 +559,7 @@ Full job example of a directory signing and verifying flow.
            type: dir
            target: '/GitHub/workspace/'
       
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: valint-workdir-evidence
           path: |
@@ -604,7 +604,7 @@ Full job example of a git repository signing and verifying flow.
            type: git
            target: '/GitHub/workspace/my_repo'
       
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: valint-git-evidence
           path: |
