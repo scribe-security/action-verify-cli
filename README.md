@@ -23,66 +23,108 @@ The command allows users to verify any target against its evidence.
 ### Input arguments
 ```yaml
   target:
-    description: Target object name format=[<image:tag>, <dir path>, <git url>]
+    description: Target object name format=[<image:tag>, <dir path>, <git url>] (Optional)
     required: true
-  type:
-    description: Target source type scheme=[docker,docker-archive, oci-archive, dir, registry, git, generic]
-    deprecationMessage: Please use target fields, formated [type]:[target]:[tag]
-    required: false
-  scribe-audience:
-    description: Scribe auth audience
-    deprecationMessage: Please use scribe-auth-audience instead
-    required: false
-  attestation:
-    description: Attestation for target
-  common-name:
-    description: Default policy allowed common names
-  email:
-    description: Default policy allowed emails
-  force:
-    description: Force skip cache
-  input-format:
-    description: Evidence format, options=[attest-cyclonedx-json attest-slsa statement-slsa statement-cyclonedx-json statement-generic attest-generic]
-  uri:
-    description: Default policy allowed uris
-  allow-expired:
-    description: Allow expired certs
   attest-config:
     description: Attestation config path
   attest-default:
-    description: Attestation default config, options=[sigstore sigstore-github x509 x509-env]
-  backoff:
-    description: Backoff duration
+    description: Attestation default config, options=[sigstore sigstore-github x509 x509-env kms pubkey]
+  attestation:
+    description: Attestation for target
+  base-image:
+    description: Base image for the target
+  bom:
+    description: Create target SBOM evidence
+  bundle:
+    description: Policy bundle uri/path (early-availability)
+  bundle-auth:
+    description: 'Bundle repository authentication info, [format: ''username:password'']'
+  bundle-branch:
+    description: Bundle branch in the repository
+  bundle-commit:
+    description: Bundle commit hash in the repository
+  bundle-depth:
+    description: Bundle clone depth
+  bundle-tag:
+    description: Bundle tag in the repository
   ca:
     description: x509 CA Chain path
-  cache-enable:
-    description: Enable local cache
   cert:
     description: x509 Cert path
-  config:
-    description: Configuration file path
-  context-dir:
-    description: Context dir
+  common-name:
+    description: Default policy allowed common names
   crl:
     description: x509 CRL path
   crl-full-chain:
     description: Enable Full chain CRL verfication
+  depth:
+    description: Git clone depth
   disable-crl:
     description: Disable certificate revocation verificatoin
-  env:
-    description: Environment keys to include in sbom
-  filter-regex:
-    description: Filter out files by regex
-  filter-scope:
-    description: Filter packages by scope
+  email:
+    description: Default policy allowed emails
+  force:
+    description: Force skip cache
+  format:
+    description: Policy Result Evidence format, options=[statement-sarif attest-sarif sarif ]
+  git-auth:
+    description: 'Git repository authentication info, [format: ''username:password'']'
   git-branch:
     description: Git branch in the repository
   git-commit:
     description: Git commit hash in the repository
   git-tag:
     description: Git tag in the repository
+  initiative:
+    description: Run only rules with specified initiative
+  input-format:
+    description: Input Evidence format, options=[attest-cyclonedx-json attest-slsa statement-slsa statement-cyclonedx-json statement-generic attest-generic ]
   key:
     description: x509 Private key path
+  kms:
+    description: Provide KMS key reference
+  oci:
+    description: Enable OCI store
+  oci-repo:
+    description: Select OCI custom attestation repo
+  pass:
+    description: Private key password
+  payload:
+    description: path of the decoded payload
+  platform:
+    description: Select target platform, examples=windows/armv6, arm64 ..)
+  policy:
+    description: Policy configuration file path (early-availability)
+  provenance:
+    description: Create target SLSA Provenance evidence
+  pubkey:
+    description: Public key path
+  public-key:
+    description: Public key path
+  rule:
+    description: Rule configuration file path (early-availability)
+  rule-args:
+    description: Policy arguments
+  rule-label:
+    description: Run only rules with specified label
+  skip-bundle:
+    description: Skip bundle download
+  skip-report:
+    description: Skip Policy report stage
+  uri:
+    description: Default policy allowed uris
+  cache-enable:
+    description: Enable local cache
+  config:
+    description: Configuration file path
+  deliverable:
+    description: Mark as deliverable, options=[true, false]
+  env:
+    description: Environment keys to include in evidence
+  gate:
+    description: Policy Gate name
+  input:
+    description: Input Evidence target, format (\<parser>:\<file> or \<scheme>:\<name>:\<tag>)
   label:
     description: Add Custom labels
   level:
@@ -91,10 +133,6 @@ The command allows users to verify any target against its evidence.
     description: Attach context to all logs
   log-file:
     description: Output log to file
-  oci:
-    description: Enable OCI store
-  oci-repo:
-    description: Select OCI custom attestation repo
   output-directory:
     description: Output directory path
     default: ./scribe/valint
@@ -102,24 +140,20 @@ The command allows users to verify any target against its evidence.
     description: Output file name
   pipeline-name:
     description: Pipeline name
-  policy-args:
-    description: Policy arguments
   predicate-type:
     description: Custom Predicate type (generic evidence format)
   product-key:
     description: Product Key
   product-version:
     description: Product Version
-  scribe-auth-audience:
-    description: Scribe auth audience
   scribe-client-id:
-    description: Scribe Client ID
+    description: Scribe Client ID (deprecated)
   scribe-client-secret:
-    description: Scribe Client Secret
+    description: Scribe Client Token
+  scribe-disable:
+    description: Disable scribe client
   scribe-enable:
-    description: Enable scribe client
-  scribe-login-url:
-    description: Scribe login url
+    description: Enable scribe client (deprecated)
   scribe-url:
     description: Scribe API Url
   structured:
@@ -131,15 +165,70 @@ The command allows users to verify any target against its evidence.
 ```
 
 ### Usage
+Containerized action can be used on Linux runners as following
 ```yaml
 - name: valint verify
   id: valint_verify
-  uses: scribe-security/action-verify-cli@v0.4.2
+  uses: scribe-security/action-verify@v1.5.15
   with:
       target: 'busybox:latest'
 ```
 
+Composite Action can be used on Linux or Windows runners as following
+```yaml
+- name: Generate cyclonedx json SBOM
+  uses: scribe-security/action-verify-cli@v1.5.15
+  with:
+    target: 'hello-world:latest'
+```
+
 > Use `master` instead of tag to automatically pull latest version.
+
+
+### 1. Obtain a Scribe Hub API Token
+1. Sign in to [Scribe Hub](https://app.scribesecurity.com). If you don't have an account you can sign up for free [here](https://scribesecurity.com/scribe-platform-lp/ "Start Using Scribe For Free").
+
+2. Create a API token in [Scribe Hub > Settings > Tokens](https://app.scribesecurity.com/settings/tokens). Copy it to a safe temporary notepad until you complete the integration.
+
+:::note Important
+The token is a secret and will not be accessible from the UI after you finalize the token generation. 
+:::
+
+### 2. Add the API token to GitLab secrets
+
+Set your Scribe Hub API token in Github with a key named SCRIBE_TOKEN as instructed in *GitHub instructions](https://docs.github.com/en/actions/security-guides/encrypted-secrets/ "GitHub Instructions")
+
+### 3. Instrument your build scripts
+
+#### Usage
+
+```yaml
+name:  scribe_github_workflow
+
+on: 
+  push:
+    tags:
+      - "*"
+
+jobs:
+  scribe-sign-verify
+    runs-on: ubuntu-latest
+    steps:
+      
+      # - uses: scribe-security/action-evidence@master
+      # - uses: scribe-security/action-slsa@master
+      - uses: scribe-security/action-bom@master
+        with:
+          target: [target]
+          format: [attest, statement]
+          scribe-client-secret: ${{ secrets.SCRIBE_TOKEN }}
+
+      - uses: scribe-security/action-verify@master
+        with:
+          target: [target]
+          input-format: [attest, statement, attest-slsa, statement-slsa, attest-generic, statement-generic]
+          scribe-client-secret: ${{ secrets.SCRIBE_TOKEN }}
+```
 
 ### Configuration
 If you prefer using a custom configuration file instead of specifying arguments directly, you have two choices. You can either place the configuration file in the default path, which is `.valint.yaml`, or you can specify a custom path using the `config` argument.
@@ -209,114 +298,388 @@ jobs:
   scribe-sign-verify
     runs-on: ubuntu-latest
     steps:
-        uses: scribe-security/action-bom-cli@master
+        uses: scribe-security/action-bom@master
         with:
           target: busybox:latest
           format: attest
         env:
           SIGNER_KEY: ${{ secrets.SIGNER_KEY }}
-          SIGNER_CERT: ${{ secrets.SIGNER_KEY }}
+          SIGNER_CERT: ${{ secrets.SIGNER_CERT }}
           COMPANY_CA:  ${{ secrets.COMPANY_CA }}
 
-        uses: scribe-security/action-verify-cli@master
+        uses: scribe-security/action-verify@master
         with:
           target: busybox:latest
           input-format: attest
         env:
-          SIGNER_CERT: ${{ secrets.SIGNER_KEY }}
+          SIGNER_CERT: ${{ secrets.SIGNER_CERT }}
           COMPANY_CA:  ${{ secrets.COMPANY_CA }}
 ```
 </details>
 
+### Running action as non root user
+By default, the action runs in its own pid namespace as the root user. You can change the user by setting specific `USERID` and `USERNAME` environment variables.
 
-### Target types - `[target]`
----
-Target types are types of artifacts produced and consumed by your supply chain.
-Using supported targets, you can collect evidence and verify compliance on a range of artifacts.
+```YAML
+- name: Verify image
+  uses: scribe-security/action-verify@master
+  with:
+    target: 'busybox:latest'
+    format: json
+  env:
+    USERID: 1001
+    USERNAME: runner
+``` 
 
-> Fields specified as [target] support the following format.
+<details>
+  <summary> Non root user with HIGH UID/GID </summary>
+By default, the action runs in its own pid namespace as the root user. If the user uses a high UID or GID, you must specify all the following environment variables. You can change the user by setting specific `USERID` and `USERNAME` variables. Additionally, you may group the process by setting specific `GROUPID` and `GROUP` variables.
 
-### Format
+```YAML
+- name: Verify image
+  uses: scribe-security/action-verify@master
+  with:
+    target: 'busybox:latest'
+    format: json
+  env:
+    USERID: 888000888
+    USERNAME: my_user
+    GROUPID: 777000777
+    GROUP: my_group
+``` 
 
-`[scheme]:[name]:[tag]` 
+</details>
+``` 
 
-> Backwards compatibility: It is still possible to use the `type: [scheme]`, `target: [name]:[tag]` format.
-
-| Sources | target-type | scheme | Description | example
-| --- | --- | --- | --- | --- |
-| Docker Daemon | image | docker | use the Docker daemon | docker:busybox:latest |
-| OCI registry | image | registry | use the docker registry directly | registry:busybox:latest |
-| Docker archive | image | docker-archive | use a tarball from disk for archives created from "docker save" | image | docker-archive:path/to/yourimage.tar |
-| OCI archive | image | oci-archive | tarball from disk for OCI archives | oci-archive:path/to/yourimage.tar |
-| Remote git | git| git | remote repository git | git:https://github.com/yourrepository.git |
-| Local git | git | git | local repository git | git:path/to/yourrepository | 
-| Directory | dir | dir | directory path on disk | dir:path/to/yourproject | 
-| File | file | file | file path on disk | file:path/to/yourproject/file | 
-
-### Evidence Stores
-Each storer can be used to store, find and download evidence, unifying all the supply chain evidence into a system is an important part to be able to query any subset for policy validation.
-
-| Type  | Description | requirement |
-| --- | --- | --- |
-| scribe | Evidence is stored on scribe service | scribe credentials |
-| OCI | Evidence is stored on a remote OCI registry | access to a OCI registry |
-
-### Scribe Evidence store
-Scribe evidence store allows you store evidence using scribe Service.
-
-Related Flags:
-> Note the flag set:
->* `scribe-client-id`
->* `scribe-client-secret`
->* `scribe-enable`
-
-### Before you begin
-Integrating Scribe Hub with your environment requires the following credentials that are found in the **Integrations** page. (In your **[Scribe Hub](https://scribehub.scribesecurity.com/ "Scribe Hub Link")** go to **integrations**)
-
-* **Client ID**
-* **Client Secret**
-
-<img src='../../../../../img/ci/integrations-secrets.jpg' alt='Scribe Integration Secrets' width='70%' min-width='400px'/>
-
-* Add the credentials according to the **[GitHub instructions](https://docs.github.com/en/actions/security-guides/encrypted-secrets/ "GitHub Instructions")**. Based on the code example below, be sure to call the secrets **clientid** for the **client_id**, and **clientsecret** for the **client_secret**.
-
-* Use the Scribe custom pipe as shown in the example bellow
-
-### Usage
+### Platform-Specific Image Handling
+The Valint tool is compatible with both Linux and Windows images. Set the desired platform using the 'platform' field in your configuration:
 
 ```yaml
-name:  scribe_github_workflow
-
-on: 
-  push:
-    tags:
-      - "*"
-
-jobs:
-  scribe-sign-verify
-    runs-on: ubuntu-latest
-    steps:
-
-        uses: scribe-security/action-bom-cli@master
-        with:
-          target: [target]
-          format: [attest, statement, attest-slsa, statement-slsa, attest-generic, statement-generic]
-          scribe-enable: true
-          scribe-client-id: ${{ secrets.clientid }}
-          scribe-client-secret: ${{ secrets.clientsecret }}
-
-        uses: scribe-security/action-verify-cli@master
-        with:
-          target: [target]
-          input-format: [attest, statement, attest-slsa, statement-slsa, attest-generic, statement-generic]
-          scribe-enable: true
-          scribe-client-id: ${{ secrets.clientid }}
-          scribe-client-secret: ${{ secrets.clientsecret }}
+- name: valint verify
+  uses: scribe-security/action-verify@master
+  with:
+    target: hello-world:latest
+    platform: linux/amd64
 ```
 
-You can store the Provenance Document in alternative evidence stores. You can learn more about them **[here](../../../other-evidence-stores)**.
+Docker is configured by default to pull images matching the runner's platform. For analyzing images across different platforms, you need to pull the image from the registry and specify the platform.
+
+```yaml
+- name: valint verify
+  uses: scribe-security/action-verify@master
+  with:
+    target: registry:hello-world:latest
+    platform: windows/amd64
+```
+
+### Windows Runner Compatibility
+> On Windows Github runners, containerized actions are currently not supported. It's recommended to use CLI actions in such cases.
+
+```yaml
+- name: valint verify
+  uses: scribe-security/action-verify-cli@master
+  with:
+    target: hello-world:latest
+```
+
+### Verify SBOMs examples
+<details>
+  <summary> Verify target (SBOM) </summary>
+
+Verify targets against a signed attestation.  
+Default attestation config: `sigstore-github` - Sigstore (Fulcio, Rekor).  
+Valint will look for either an SBOM or SLSA attestation to verify against.  
+
+```yaml
+- name: valint verify
+  uses: scribe-security/action-verify@master
+  with:
+    target: 'busybox:latest'
+``` 
+
+</details>
+
+<details>
+  <summary> Verify target (SLSA) </summary>
+
+Verify targets against a signed attestation. <br />
+Default attestation config: `sigstore-github` - Sigstore (Fulcio, Rekor). <br />
+Valint will look for either an SBOM or SLSA attestation to verify against. <br />
+
+
+```yaml
+- name: valint verify
+  uses: scribe-security/action-verify@master
+  with:
+    target: 'busybox:latest'
+    input-format: attest-slsa
+``` 
+
+</details>
+
+<details>
+  <summary> Verify target (Generic) </summary>
+
+Verify targets against a signed attestation. <br />
+Default attestation config: `sigstore-github` - Sigstore (Fulcio, Rekor). <br />
+Valint will look for either an SBOM or SLSA attestation to verify against. <br />
+
+
+```yaml
+- name: valint verify
+  uses: scribe-security/action-verify@master
+  with:
+    target: 'busybox:latest'
+    input-format: attest-generic
+``` 
+
+</details>
+
+<details>
+  <summary> Verify Policy flow - image target (Signed SBOM) </summary>
+
+Full job example of a image signing and verifying flow.
+
+```YAML
+ valint-busybox-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: valint attest
+        id: valint_attest
+        uses: scribe-security/action-bom@master
+        with:
+           target: 'busybox:latest'
+           format: attest
+           force: true
+
+      - name: valint verify
+        id: valint_verify
+        uses: scribe-security/action-verify@master
+        with:
+           target: 'busybox:latest'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: valint-busybox-test
+          path: scribe/valint
+``` 
+
+</details>
+
+<details>
+  <summary> Verify Policy flow - image target (Signed SLSA) </summary>
+
+Full job example of a image signing and verifying flow.
+
+```YAML
+ valint-busybox-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: valint attest slsa
+        id: valint_attest
+        uses: scribe-security/action-bom@master
+        with:
+           target: 'busybox:latest'
+           format: attest-slsa
+           force: true
+
+      - name: valint verify attest slsa
+        id: valint_verify
+        uses: scribe-security/action-verify@master
+        with:
+           target: 'busybox:latest'
+           input-format: attest-slsa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: valint-busybox-test
+          path: scribe/valint
+``` 
+
+</details>
+
+<details>
+  <summary> Verify Policy flow - Directory target (Signed SBOM) </summary>
+
+Full job example of a directory signing and verifying flow.
+
+```YAML
+  valint-dir-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: valint attest workdir
+        id: valint_attest_dir
+        uses: scribe-security/action-bom@master
+        with:
+           type: dir
+           target: '/GitHub/workspace/'
+           format: attest
+           force: true
+
+      - name: valint verify workdir
+        id: valint_verify_dir
+        uses: scribe-security/action-verify@master
+        with:
+           type: dir
+           target: '/GitHub/workspace/'
+      
+      - uses: actions/upload-artifact@v4
+        with:
+          name: valint-workdir-evidence
+          path: |
+            scribe/valint      
+``` 
+
+</details>
+
+
+<details>
+  <summary> Verify Policy flow - Git repository target (Signed SBOM) </summary>
+
+Full job example of a git repository signing and verifying flow.
+> Support for both local (path) and remote git (URL) repositories.
+
+```YAML
+  valint-dir-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: valint attest local repo
+        id: valint_attest_dir
+        uses: scribe-security/action-bom@master
+        with:
+           type: git
+           target: '/GitHub/workspace/my_repo'
+           format: attest
+           force: true
+
+      - name: valint verify local repo
+        id: valint_verify_dir
+        uses: scribe-security/action-verify@master
+        with:
+           type: git
+           target: '/GitHub/workspace/my_repo'
+      
+      - uses: actions/upload-artifact@v4
+        with:
+          name: valint-git-evidence
+          path: |
+            scribe/valint      
+``` 
+</details>
+
+<details>
+  <summary> Attest and verify evidence on OCI (SBOM, SLSA) </summary>
+
+Store any evidence on any OCI registry. <br />
+Support storage for all targets and both SBOM and SLSA evidence formats.
+
+> Use input variable `format` to select between supported formats. <br />
+> Write permission to `oci-repo` is required. 
+
+```YAML
+valint-dir-test:
+  runs-on: ubuntu-latest
+  permissions:
+    id-token: write
+  env:
+    DOCKER_CONFIG: $HOME/.docker
+  steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+
+      - uses: scribe-security/action-bom@master
+        id: valint_attest
+        with:
+          target: busybox:latest
+          force: true
+          format: attest
+          oci: true
+          oci-repo: ${{ env.REGISTRY_URL }}/attestations    
+``` 
+
+Following actions can be used to verify a target over the OCI store.
+```yaml
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+
+      - uses: scribe-security/action-verify@master
+        id: valint_attest
+        with:
+          target: busybox:latest
+          input-format: attest
+          oci: true
+          oci-repo: ${{ env.REGISTRY_URL }}/attestations   
+```
+> Read permission to `oci-repo` is required. 
+
+</details>
+
+<details>
+  <summary> Install Valint (tool) </summary>
+
+Install Valint as a tool:
+```yaml
+- name: install valint
+  uses: scribe-security/action-installer@master
+
+- name: valint run
+  run: |
+    valint --version
+    valint bom busybox:latest
+``` 
+</details>
+
 
 ### Alternative evidence stores
+
 > You can learn more about alternative stores **[here](https://scribe-security.netlify.app/docs/integrating-scribe/other-evidence-stores)**.
 
 <details>
@@ -359,331 +722,25 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name:  Generate evidence step
-        uses: scribe-security/action-bom-cli@master
+      
+      # uses: scribe-security/action-evidence@master
+      # uses: scribe-security/action-slsa@master
+      
+      - uses: scribe-security/action-bom@master
         with:
           target: [target]
-          format: [attest, statement, attest-slsa, statement-slsa, attest-generic, statement-generic]
+          format: [attest, statement]
           oci: true
           oci-repo: [oci_repo]
 
       - name:  Verify policy step
-        uses: scribe-security/action-verify-cli@master
+        uses: scribe-security/action-verify@master
         with:
           target: [target]
           input-format: [attest, statement, attest-slsa, statement-slsa, attest-generic, statement-generic]
           oci: true
           oci-repo: [oci_repo]
 ```
-</details>
-
-### Running action as non root user
-By default action runs in its own pid namespace as the root user.
-You change users you can use the `USERID` and `USERNAME` env
-
-```YAML
-- name: Generate cyclonedx json SBOM
-  uses: scribe-security/action-bom-cli@master
-  with:
-    target: 'busybox:latest'
-    format: json
-  env:
-    USERID: 1001
-    USERNAME: runner
-``` 
-
-### Verify SBOMs examples
-<details>
-  <summary> Verify target (SBOM) </summary>
-
-Verify targets against a signed attestation.  
-Default attestation config: `sigstore-github` - Sigstore (Fulcio, Rekor).  
-Valint will look for either an SBOM or SLSA attestation to verify against.  
-
-```yaml
-- name: valint verify
-  uses: scribe-security/action-verify-cli@master
-  with:
-    target: 'busybox:latest'
-``` 
-
-</details>
-
-<details>
-  <summary> Verify target (SLSA) </summary>
-
-Verify targets against a signed attestation. <br />
-Default attestation config: `sigstore-github` - Sigstore (Fulcio, Rekor). <br />
-Valint will look for either an SBOM or SLSA attestation to verify against. <br />
-
-
-```yaml
-- name: valint verify
-  uses: scribe-security/action-verify-cli@master
-  with:
-    target: 'busybox:latest'
-    input-format: attest-slsa
-``` 
-
-</details>
-
-<details>
-  <summary> Verify target (Generic) </summary>
-
-Verify targets against a signed attestation. <br />
-Default attestation config: `sigstore-github` - Sigstore (Fulcio, Rekor). <br />
-Valint will look for either an SBOM or SLSA attestation to verify against. <br />
-
-
-```yaml
-- name: valint verify
-  uses: scribe-security/action-verify-cli@master
-  with:
-    target: 'busybox:latest'
-    input-format: attest-generic
-``` 
-
-</details>
-
-<details>
-  <summary> Verify Policy flow - image target (Signed SBOM) </summary>
-
-Full job example of a image signing and verifying flow.
-
-```YAML
- valint-busybox-test:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    steps:
-
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: valint attest
-        id: valint_attest
-        uses: scribe-security/action-bom-cli@master
-        with:
-           target: 'busybox:latest'
-           format: attest
-           force: true
-
-      - name: valint verify
-        id: valint_verify
-        uses: scribe-security/action-verify-cli@master
-        with:
-           target: 'busybox:latest'
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: valint-busybox-test
-          path: scribe/valint
-``` 
-
-</details>
-
-<details>
-  <summary> Verify Policy flow - image target (Signed SLSA) </summary>
-
-Full job example of a image signing and verifying flow.
-
-```YAML
- valint-busybox-test:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    steps:
-
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: valint attest slsa
-        id: valint_attest
-        uses: scribe-security/action-bom-cli@master
-        with:
-           target: 'busybox:latest'
-           format: attest-slsa
-           force: true
-
-      - name: valint verify attest slsa
-        id: valint_verify
-        uses: scribe-security/action-verify-cli@master
-        with:
-           target: 'busybox:latest'
-           input-format: attest-slsa
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: valint-busybox-test
-          path: scribe/valint
-``` 
-
-</details>
-
-<details>
-  <summary> Verify Policy flow - Directory target (Signed SBOM) </summary>
-
-Full job example of a directory signing and verifying flow.
-
-```YAML
-  valint-dir-test:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    steps:
-
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: valint attest workdir
-        id: valint_attest_dir
-        uses: scribe-security/action-bom-cli@master
-        with:
-           type: dir
-           target: '/GitHub/workspace/'
-           format: attest
-           force: true
-
-      - name: valint verify workdir
-        id: valint_verify_dir
-        uses: scribe-security/action-verify-cli@master
-        with:
-           type: dir
-           target: '/GitHub/workspace/'
-      
-      - uses: actions/upload-artifact@v4
-        with:
-          name: valint-workdir-evidence
-          path: |
-            scribe/valint      
-``` 
-
-</details>
-
-
-<details>
-  <summary> Verify Policy flow - Git repository target (Signed SBOM) </summary>
-
-Full job example of a git repository signing and verifying flow.
-> Support for both local (path) and remote git (URL) repositories.
-
-```YAML
-  valint-dir-test:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    steps:
-
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: valint attest local repo
-        id: valint_attest_dir
-        uses: scribe-security/action-bom-cli@master
-        with:
-           type: git
-           target: '/GitHub/workspace/my_repo'
-           format: attest
-           force: true
-
-      - name: valint verify local repo
-        id: valint_verify_dir
-        uses: scribe-security/action-verify-cli@master
-        with:
-           type: git
-           target: '/GitHub/workspace/my_repo'
-      
-      - uses: actions/upload-artifact@v4
-        with:
-          name: valint-git-evidence
-          path: |
-            scribe/valint      
-``` 
-</details>
-
-<details>
-  <summary> Attest and verify evidence on OCI (SBOM, SLSA) </summary>
-
-Store any evidence on any OCI registry. <br />
-Support storage for all targets and both SBOM and SLSA evidence formats.
-
-> Use input variable `format` to select between supported formats. <br />
-> Write permission to `oci-repo` is required. 
-
-```YAML
-valint-dir-test:
-  runs-on: ubuntu-latest
-  permissions:
-    id-token: write
-  env:
-    DOCKER_CONFIG: $HOME/.docker
-  steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY_URL }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_TOKEN }}
-
-      - uses: scribe-security/action-bom-cli@master
-        id: valint_attest
-        with:
-          target: busybox:latest
-          force: true
-          format: attest
-          oci: true
-          oci-repo: ${{ env.REGISTRY_URL }}/attestations    
-``` 
-
-Following actions can be used to verify a target over the OCI store.
-```yaml
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY_URL }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_TOKEN }}
-
-      - uses: scribe-security/action-verify-cli@master
-        id: valint_attest
-        with:
-          target: busybox:latest
-          input-format: attest
-          oci: true
-          oci-repo: ${{ env.REGISTRY_URL }}/attestations   
-```
-> Read permission to `oci-repo` is required. 
-
-</details>
-
-<details>
-  <summary> Install Valint (tool) </summary>
-
-Install Valint as a tool:
-```yaml
-- name: install valint
-  uses: scribe-security/action-installer@master
-
-- name: valint run
-  run: |
-    valint --version
-    valint bom busybox:latest
-``` 
 </details>
 
 ### .gitignore
@@ -693,5 +750,6 @@ By default add `**/scribe` to your `.gitignore`.
 ## Other Actions
 * [bom](action-bom.md), [source](https://github.com/scribe-security/action-bom)
 * [slsa](action-slsa.md), [source](https://github.com/scribe-security/action-slsa)
+* [evidence](action-evidence.md), [source](https://github.com/scribe-security/action-evidence)
 * [verify](action-verify.md), [source](https://github.com/scribe-security/action-verify)
 * [installer](action-installer.md), [source](https://github.com/scribe-security/action-installer)
